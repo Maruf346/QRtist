@@ -3,99 +3,342 @@
 {% block title %}QR History - QRtist{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<!-- Hero Section -->
+<div class="hero-section" style="background: var(--secondary-gradient);">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold mb-3">QR Code History</h1>
+        <p class="lead opacity-75">View and manage all your generated QR codes</p>
+    </div>
+</div>
+
+<!-- Stats Bar -->
+<div class="container py-4">
+    <div class="row g-3">
+        <div class="col-md-3">
+            <div class="glass-effect rounded-3 p-3 text-center">
+                <h4 class="mb-0">{{ qr_codes|length }}</h4>
+                <small class="text-muted">Total QR Codes</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="glass-effect rounded-3 p-3 text-center">
+                <h4 class="mb-0">{{ total_downloads }}</h4>
+                <small class="text-muted">Total Downloads</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="glass-effect rounded-3 p-3 text-center">
+                <h4 class="mb-0">{{ today_count }}</h4>
+                <small class="text-muted">Today</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="glass-effect rounded-3 p-3 text-center">
+                <h4 class="mb-0">
+                    {% if most_downloaded %}{{ most_downloaded.download_count }}{% else %}0{% endif %}
+                </h4>
+                <small class="text-muted">Most Downloads</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="container py-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="fas fa-history me-2"></i>QR Code History</h1>
-        <a href="{% url 'home' %}" class="btn btn-primary">
-            <i class="fas fa-plus me-1"></i> Generate New
-        </a>
+        <div>
+            <h2 class="fw-bold">All Generated QR Codes</h2>
+            <p class="text-muted mb-0">Browse, download, and manage your QR codes</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'home' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i> New QR Code
+            </a>
+            <div class="dropdown">
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" 
+                        data-bs-toggle="dropdown">
+                    <i class="fas fa-filter me-2"></i> Filter
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="?type=all">All Types</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="?type=text">Text Only</a></li>
+                    <li><a class="dropdown-item" href="?type=url">URL Only</a></li>
+                    <li><a class="dropdown-item" href="?type=pdf">PDF Only</a></li>
+                    <li><a class="dropdown-item" href="?type=image">Image Only</a></li>
+                </ul>
+            </div>
+        </div>
     </div>
     
     {% if qr_codes %}
-    <div class="table-responsive">
-        <table class="table table-hover">
-            <thead class="table-light">
-                <tr>
-                    <th>QR Code</th>
-                    <th>Type</th>
-                    <th>Content</th>
-                    <th>Downloads</th>
-                    <th>Created</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for qr in qr_codes %}
-                <tr>
-                    <td>
-                        <img src="{{ qr.qr_image.url }}" alt="QR Code" 
-                             class="img-thumbnail" style="width: 80px; height: 80px;">
-                    </td>
-                    <td>
-                        <span class="badge bg-{% if qr.content_type == 'text' %}primary{% elif qr.content_type == 'url' %}success{% elif qr.content_type == 'pdf' %}danger{% else %}warning{% endif %}">
+    <div class="row g-4">
+        {% for qr in qr_codes %}
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="card border-0 shadow-sm h-100 hover-lift">
+                <div class="card-body p-4">
+                    <!-- QR Code Image -->
+                    <div class="text-center mb-3">
+                        <img src="{{ qr.qr_image.url }}" 
+                             alt="QR Code" 
+                             class="img-fluid rounded-3 shadow-sm"
+                             style="width: 140px; height: 140px; object-fit: cover;">
+                    </div>
+                    
+                    <!-- Content Preview -->
+                    <h6 class="fw-bold mb-2 text-truncate" title="{{ qr.get_content_preview }}">
+                        {{ qr.get_content_preview }}
+                    </h6>
+                    
+                    <!-- Metadata -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="badge bg-{% if qr.content_type == 'text' %}primary{% elif qr.content_type == 'url' %}info{% elif qr.content_type == 'pdf' %}danger{% else %}warning{% endif %}">
+                            <i class="fas fa-{% if qr.content_type == 'text' %}font{% elif qr.content_type == 'url' %}link{% elif qr.content_type == 'pdf' %}file-pdf{% else %}image{% endif %} me-1"></i>
                             {{ qr.content_type|upper }}
                         </span>
-                    </td>
-                    <td>
-                        <small>{{ qr.get_content_preview }}</small>
-                        {% if qr.file_size %}
-                        <br><span class="text-muted small">{{ qr.file_size }}</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <span class="badge bg-secondary">{{ qr.download_count }}</span>
-                        {% if qr.last_downloaded %}
-                        <br><small class="text-muted">{{ qr.last_downloaded|timesince }} ago</small>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <small>{{ qr.created_at|date:"M d, Y" }}</small>
-                        <br><small class="text-muted">{{ qr.created_at|time:"H:i" }}</small>
-                    </td>
-                    <td>
-                        <a href="{% url 'download_qr' qr.id %}" class="btn btn-sm btn-outline-success">
-                            <i class="fas fa-download"></i>
+                        <span class="badge bg-secondary">
+                            <i class="fas fa-download me-1"></i> {{ qr.download_count }}
+                        </span>
+                    </div>
+                    
+                    <!-- File Info -->
+                    {% if qr.file_size %}
+                    <div class="mb-3">
+                        <small class="text-muted">
+                            <i class="fas fa-file me-1"></i> {{ qr.file_size }}
+                        </small>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Timestamp -->
+                    <div class="mb-4">
+                        <small class="text-muted">
+                            <i class="far fa-clock me-1"></i> {{ qr.created_at|date:"M d, Y" }}
+                        </small>
+                        <br>
+                        <small class="text-muted">{{ qr.created_at|time:"H:i" }}</small>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'download_qr' qr.id %}" 
+                           class="btn btn-sm btn-primary">
+                            <i class="fas fa-download me-1"></i> Download
                         </a>
-                        <button class="btn btn-sm btn-outline-info" 
-                                onclick="copyToClipboard('{{ qr.id }}')"
-                                title="Copy ID">
-                            <i class="fas fa-copy"></i>
-                        </button>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-secondary copy-id-btn flex-fill"
+                                    data-id="{{ qr.id }}">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-info flex-fill"
+                                    onclick="viewQRDetails('{{ qr.id }}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Hover Overlay -->
+                <div class="card-hover-overlay">
+                    <div class="overlay-content">
+                        <div class="btn-group">
+                            <a href="{% url 'download_qr' qr.id %}" 
+                               class="btn btn-sm btn-light">
+                                <i class="fas fa-download"></i>
+                            </a>
+                            <button class="btn btn-sm btn-light copy-id-btn"
+                                    data-id="{{ qr.id }}">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                            <button class="btn btn-sm btn-light"
+                                    onclick="viewQRDetails('{{ qr.id }}')">
+                                <i class="fas fa-info-circle"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
     </div>
+    
+    <!-- Pagination -->
+    {% if qr_codes.has_other_pages %}
+    <nav class="mt-5" aria-label="QR codes pagination">
+        <ul class="pagination justify-content-center">
+            {% if qr_codes.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ qr_codes.previous_page_number }}">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for i in qr_codes.paginator.page_range %}
+                {% if qr_codes.number == i %}
+                <li class="page-item active">
+                    <span class="page-link">{{ i }}</span>
+                </li>
+                {% elif i > qr_codes.number|add:'-3' and i < qr_codes.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if qr_codes.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ qr_codes.next_page_number }}">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    
     {% else %}
+    <!-- Empty State -->
     <div class="text-center py-5">
-        <i class="fas fa-qrcode fa-4x text-muted mb-3"></i>
-        <h4>No QR codes generated yet</h4>
-        <p>Generate your first QR code to see it here!</p>
-        <a href="{% url 'home' %}" class="btn btn-primary">Generate QR Code</a>
+        <div class="mb-4">
+            <i class="fas fa-qrcode fa-4x text-muted opacity-25"></i>
+        </div>
+        <h4 class="fw-bold mb-3">No QR codes yet</h4>
+        <p class="text-muted mb-4">Start creating your first QR code to see it here!</p>
+        <a href="{% url 'home' %}" class="btn btn-primary btn-lg px-5">
+            <i class="fas fa-plus me-2"></i> Create QR Code
+        </a>
     </div>
     {% endif %}
 </div>
 
-<script>
-function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(function() {
-        // Show toast notification
-        const toast = $(`
-            <div class="toast align-items-center text-bg-success border-0" role="alert">
-                <div class="d-flex">
-                    <div class="toast-body">
-                        QR ID copied to clipboard!
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+<!-- Quick Stats -->
+<div class="container py-5">
+    <div class="card border-0 shadow-lg">
+        <div class="card-header bg-white">
+            <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>QR Code Distribution</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3 text-center">
+                    <div class="display-4 fw-bold text-primary mb-2">{{ text_count }}</div>
+                    <div class="text-muted">Text QR Codes</div>
+                </div>
+                <div class="col-md-3 text-center">
+                    <div class="display-4 fw-bold text-info mb-2">{{ url_count }}</div>
+                    <div class="text-muted">URL QR Codes</div>
+                </div>
+                <div class="col-md-3 text-center">
+                    <div class="display-4 fw-bold text-danger mb-2">{{ pdf_count }}</div>
+                    <div class="text-muted">PDF QR Codes</div>
+                </div>
+                <div class="col-md-3 text-center">
+                    <div class="display-4 fw-bold text-warning mb-2">{{ image_count }}</div>
+                    <div class="text-muted">Image QR Codes</div>
                 </div>
             </div>
-        `);
-        $('body').append(toast);
-        const bsToast = new bootstrap.Toast(toast[0]);
-        bsToast.show();
-        setTimeout(() => toast.remove(), 3000);
+        </div>
+    </div>
+</div>
+
+<style>
+.hover-lift {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.hover-lift:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.card-hover-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.hover-lift:hover .card-hover-overlay {
+    opacity: 1;
+}
+
+.overlay-content {
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
+}
+
+.hover-lift:hover .overlay-content {
+    transform: translateY(0);
+}
+
+.glass-effect {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+</style>
+
+<script>
+function viewQRDetails(qrId) {
+    Swal.fire({
+        title: 'QR Code Details',
+        html: `
+            <div class="text-center mb-4">
+                <img src="/api/qr/${qrId}/image/" alt="QR Code" class="img-fluid rounded-3" style="max-width: 200px;">
+            </div>
+            <div class="text-start">
+                <p><strong>ID:</strong> ${qrId}</p>
+                <p><strong>API URL:</strong> <code>/api/qr/${qrId}/</code></p>
+                <p><strong>Download URL:</strong> <code>/download/${qrId}/</code></p>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Download',
+        cancelButtonText: 'Close',
+        showDenyButton: true,
+        denyButtonText: 'Copy ID',
+        confirmButtonColor: '#667eea',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = `/download/${qrId}/`;
+        } else if (result.isDenied) {
+            copyToClipboard(qrId);
+            Swal.fire('Copied!', 'QR ID copied to clipboard', 'success');
+        }
     });
 }
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+        });
+        Toast.fire({
+            icon: 'success',
+            title: 'Copied to clipboard!'
+        });
+    });
+}
+
+// Initialize copy buttons
+$(document).ready(function() {
+    $('.copy-id-btn').click(function() {
+        const qrId = $(this).data('id');
+        copyToClipboard(qrId);
+    });
+});
 </script>
 {% endblock %}

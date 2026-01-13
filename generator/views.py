@@ -154,7 +154,7 @@ def home_view(request):
         'image': QRCode.objects.filter(content_type='image').count(),
     }
     
-    return render(request, '/home.html', {
+    return render(request, 'home.html', {
         'recent_qrs': recent_qrs,
         'stats': stats,
     })
@@ -172,11 +172,11 @@ def download_qr_view(request, qr_id):
 def qr_history_view(request):
     """View QR code history"""
     qr_codes = QRCode.objects.all().order_by('-created_at')[:50]
-    return render(request, '/history.html', {'qr_codes': qr_codes})
+    return render(request, 'history.html', {'qr_codes': qr_codes})
 
 def api_docs_view(request):
     """Render API documentation page"""
-    return render(request, '/api_docs.html')
+    return render(request, 'api_docs.html')
 
 def stats_view(request):
     """View statistics page"""
@@ -197,4 +197,4 @@ def stats_view(request):
             last_downloaded__isnull=False
         )[:10],
     }
-    return render(request, '/stats.html', {'stats': stats})
+    return render(request, 'stats.html', {'stats': stats})

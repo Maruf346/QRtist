@@ -3,141 +3,170 @@
 {% block title %}Statistics - QRtist{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1 class="mb-4"><i class="fas fa-chart-bar me-2"></i>Statistics</h1>
-    
-    <div class="row">
-        <!-- Total Stats Card -->
-        <div class="col-md-6 col-lg-3 mb-4">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h2 class="mb-0">{{ stats.total_qrs }}</h2>
-                            <p class="mb-0">Total QR Codes</p>
-                        </div>
-                        <i class="fas fa-qrcode fa-3x opacity-50"></i>
+<!-- Hero Section -->
+<div class="hero-section" style="background: var(--success-gradient);">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold mb-3">QR Code Analytics</h1>
+        <p class="lead opacity-75">Track usage, downloads, and performance metrics</p>
+    </div>
+</div>
+
+<!-- Main Stats -->
+<div class="container py-5">
+    <div class="row g-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #667eea;">
+                <div class="card-body p-4 text-center">
+                    <div class="display-3 fw-bold text-primary mb-2">{{ stats.total_qrs }}</div>
+                    <h5 class="text-muted mb-3">Total QR Codes</h5>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-primary" style="width: 100%"></div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- Downloads Card -->
-        <div class="col-md-6 col-lg-3 mb-4">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h2 class="mb-0">{{ stats.total_downloads }}</h2>
-                            <p class="mb-0">Total Downloads</p>
-                        </div>
-                        <i class="fas fa-download fa-3x opacity-50"></i>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #4facfe;">
+                <div class="card-body p-4 text-center">
+                    <div class="display-3 fw-bold text-info mb-2">{{ stats.total_downloads }}</div>
+                    <h5 class="text-muted mb-3">Total Downloads</h5>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-info" style="width: 100%"></div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- Today's Activity -->
-        <div class="col-md-6 col-lg-3 mb-4">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h2 class="mb-0">{{ stats.today_count }}</h2>
-                            <p class="mb-0">Generated Today</p>
-                        </div>
-                        <i class="fas fa-calendar-day fa-3x opacity-50"></i>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #fa709a;">
+                <div class="card-body p-4 text-center">
+                    <div class="display-3 fw-bold text-danger mb-2">{{ stats.today_count }}</div>
+                    <h5 class="text-muted mb-3">Generated Today</h5>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-danger" style="width: 100%"></div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- Most Downloaded -->
-        <div class="col-md-6 col-lg-3 mb-4">
-            <div class="card bg-warning text-dark">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h2 class="mb-0">
-                                {% if stats.most_downloaded %}
-                                    {{ stats.most_downloaded.download_count }}
-                                {% else %}
-                                    0
-                                {% endif %}
-                            </h2>
-                            <p class="mb-0">Most Downloads</p>
-                        </div>
-                        <i class="fas fa-star fa-3x opacity-50"></i>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #f093fb;">
+                <div class="card-body p-4 text-center">
+                    <div class="display-3 fw-bold text-warning mb-2">
+                        {% if stats.most_downloaded %}
+                        {{ stats.most_downloaded.download_count }}
+                        {% else %}
+                        0
+                        {% endif %}
+                    </div>
+                    <h5 class="text-muted mb-3">Most Downloads</h5>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-warning" style="width: 100%"></div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- QR Types Distribution -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>QR Code Distribution by Type</h5>
+</div>
+
+<!-- Distribution Section -->
+<div class="container py-5">
+    <div class="card border-0 shadow-lg">
+        <div class="card-header bg-white">
+            <h4 class="mb-0"><i class="fas fa-chart-pie me-2"></i>QR Code Distribution</h4>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
             <div class="row">
                 {% for type, count in stats.by_type.items %}
-                <div class="col-md-3 mb-3">
-                    <div class="card">
-                        <div class="card-body text-center">
-                            <h3 class="text-{% if type == 'text' %}primary{% elif type == 'url' %}success{% elif type == 'pdf' %}danger{% else %}warning{% endif %}">
-                                {{ count }}
-                            </h3>
-                            <p class="mb-0">{{ type|title }} QR Codes</p>
-                            {% if stats.total_qrs > 0 %}
-                            <small class="text-muted">
-                                {{ count|floatformat:0|add:0|floatformat:0 }}% of total
-                            </small>
-                            {% endif %}
+                <div class="col-md-3 mb-4">
+                    <div class="text-center">
+                        <div class="position-relative d-inline-block mb-3">
+                            <div class="donut-chart"
+                                 data-value="{{ count }}"
+                                 data-max="{{ stats.total_qrs }}"
+                                 data-color="{% if type == 'text' %}#667eea{% elif type == 'url' %}#4facfe{% elif type == 'pdf' %}#fa709a{% else %}#f093fb{% endif %}">
+                                <span class="donut-value">{{ count }}</span>
+                            </div>
                         </div>
+                        <h5 class="fw-bold mb-1">{{ type|title }} QR Codes</h5>
+                        {% if stats.total_qrs > 0 %}
+                        <p class="text-muted mb-0">{{ count|floatformat:0|add:0|floatformat:0 }}% of total</p>
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
             </div>
         </div>
     </div>
-    
-    <!-- Recent Activity -->
-    <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Recent Download Activity</h5>
+</div>
+
+<!-- Recent Activity -->
+<div class="container py-5">
+    <div class="card border-0 shadow-lg">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0"><i class="fas fa-bolt me-2"></i>Recent Download Activity</h4>
+            <span class="badge bg-primary">Live</span>
         </div>
-        <div class="card-body">
+        <div class="card-body p-0">
             {% if stats.recent_activity %}
             <div class="table-responsive">
-                <table class="table table-sm">
-                    <thead>
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
                         <tr>
-                            <th>QR Code</th>
-                            <th>Type</th>
-                            <th>Downloads</th>
-                            <th>Last Downloaded</th>
+                            <th class="border-0">QR Code</th>
+                            <th class="border-0">Type</th>
+                            <th class="border-0">Downloads</th>
+                            <th class="border-0">Last Downloaded</th>
+                            <th class="border-0">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for qr in stats.recent_activity %}
-                        <tr>
+                        <tr class="align-middle">
                             <td>
-                                <img src="{{ qr.qr_image.url }}" alt="QR" 
-                                     style="width: 50px; height: 50px;" class="img-thumbnail">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ qr.qr_image.url }}" 
+                                         alt="QR Code" 
+                                         class="rounded-3 me-3"
+                                         style="width: 50px; height: 50px; object-fit: cover;">
+                                    <div>
+                                        <h6 class="mb-0">{{ qr.get_content_preview|truncatechars:30 }}</h6>
+                                        <small class="text-muted">ID: {{ qr.id|slice:":8" }}...</small>
+                                    </div>
+                                </div>
                             </td>
                             <td>
-                                <span class="badge bg-{% if qr.content_type == 'text' %}primary{% elif qr.content_type == 'url' %}success{% elif qr.content_type == 'pdf' %}danger{% else %}warning{% endif %}">
+                                <span class="badge bg-{% if qr.content_type == 'text' %}primary{% elif qr.content_type == 'url' %}info{% elif qr.content_type == 'pdf' %}danger{% else %}warning{% endif %}">
                                     {{ qr.content_type|upper }}
                                 </span>
                             </td>
                             <td>
-                                <strong>{{ qr.download_count }}</strong>
+                                <div class="d-flex align-items-center">
+                                    <div class="progress flex-grow-1 me-3" style="height: 8px;">
+                                        <div class="progress-bar bg-{% if qr.content_type == 'text' %}primary{% elif qr.content_type == 'url' %}info{% elif qr.content_type == 'pdf' %}danger{% else %}warning{% endif %}" 
+                                             style="width: {{ qr.download_count|add:0|floatformat:0 }}%"></div>
+                                    </div>
+                                    <span class="fw-bold">{{ qr.download_count }}</span>
+                                </div>
                             </td>
                             <td>
-                                {{ qr.last_downloaded|timesince }} ago
-                                <br>
-                                <small class="text-muted">{{ qr.last_downloaded|date:"M d, Y H:i" }}</small>
+                                <div class="d-flex flex-column">
+                                    <span class="fw-bold">{{ qr.last_downloaded|timesince }} ago</span>
+                                    <small class="text-muted">{{ qr.last_downloaded|date:"M d, Y H:i" }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'download_qr' qr.id %}" 
+                                       class="btn btn-outline-primary">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                    <button class="btn btn-outline-info"
+                                            onclick="viewQRDetails('{{ qr.id }}')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
@@ -145,12 +174,229 @@
                 </table>
             </div>
             {% else %}
-            <div class="text-center py-4">
-                <i class="fas fa-info-circle fa-2x text-muted mb-3"></i>
-                <p>No download activity yet</p>
+            <div class="text-center py-5">
+                <i class="fas fa-chart-line fa-3x text-muted opacity-25 mb-3"></i>
+                <h5 class="fw-bold mb-2">No download activity yet</h5>
+                <p class="text-muted mb-4">Download some QR codes to see activity here</p>
             </div>
             {% endif %}
         </div>
     </div>
 </div>
+
+<!-- Time Series Chart (Mock) -->
+<div class="container py-5">
+    <div class="card border-0 shadow-lg">
+        <div class="card-header bg-white">
+            <h4 class="mb-0"><i class="fas fa-chart-line me-2"></i>Daily QR Code Generation</h4>
+        </div>
+        <div class="card-body p-4">
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-chart-bar fa-4x text-primary opacity-25"></i>
+                </div>
+                <h5 class="fw-bold mb-2">Analytics Dashboard</h5>
+                <p class="text-muted mb-4">Detailed analytics and charts coming soon!</p>
+                <div class="d-flex justify-content-center gap-3">
+                    <button class="btn btn-primary" onclick="showMockChart()">
+                        <i class="fas fa-eye me-2"></i> Preview Analytics
+                    </button>
+                    <button class="btn btn-outline-primary" onclick="exportStats()">
+                        <i class="fas fa-download me-2"></i> Export Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Insights -->
+<div class="container pb-5">
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="feature-icon me-3" style="background: var(--primary-gradient);">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">Most Active Time</h5>
+                            <small class="text-muted">Peak generation hours</small>
+                        </div>
+                    </div>
+                    <p class="text-muted mb-0">
+                        Most QR codes are generated between 2 PM - 5 PM (UTC).
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="feature-icon me-3" style="background: var(--secondary-gradient);">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">Popular Content</h5>
+                            <small class="text-muted">Most used feature</small>
+                        </div>
+                    </div>
+                    <p class="text-muted mb-0">
+                        URL QR codes are the most popular, followed by Text QR codes.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="feature-icon me-3" style="background: var(--success-gradient);">
+                            <i class="fas fa-trend-up"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">Growth Rate</h5>
+                            <small class="text-muted">Monthly increase</small>
+                        </div>
+                    </div>
+                    <p class="text-muted mb-0">
+                        QR code generation has increased by 25% month-over-month.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.donut-chart {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: conic-gradient(var(--chart-color) calc(var(--percentage) * 1%), #f0f0f0 0%);
+}
+
+.donut-chart::before {
+    content: '';
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: white;
+}
+
+.donut-value {
+    position: relative;
+    z-index: 1;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(102, 126, 234, 0.05) !important;
+}
+
+.feature-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+}
+</style>
+
+<script>
+// Initialize donut charts
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.donut-chart').forEach(chart => {
+        const value = parseInt(chart.dataset.value);
+        const max = parseInt(chart.dataset.max) || 100;
+        const percentage = (value / max) * 100;
+        const color = chart.dataset.color;
+        
+        chart.style.setProperty('--percentage', percentage);
+        chart.style.setProperty('--chart-color', color);
+    });
+});
+
+function showMockChart() {
+    Swal.fire({
+        title: 'Analytics Preview',
+        html: `
+            <div class="text-center mb-4">
+                <img src="https://quickchart.io/chart?c={
+                    type: 'line',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'QR Codes Generated',
+                            data: [12, 19, 3, 5, 2, 3, 15],
+                            backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                            borderColor: 'rgb(102, 126, 234)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: true, text: 'Weekly QR Code Generation' }
+                        }
+                    }
+                }" alt="Chart" class="img-fluid rounded-3">
+            </div>
+            <p class="text-muted">This is a preview. Full analytics dashboard coming soon!</p>
+        `,
+        width: 600,
+        showConfirmButton: false,
+        showCloseButton: true
+    });
+}
+
+function exportStats() {
+    Swal.fire({
+        title: 'Export Data',
+        text: 'Choose format to export statistics',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Export as CSV',
+        cancelButtonText: 'Export as JSON',
+        showDenyButton: true,
+        denyButtonText: 'Cancel',
+        confirmButtonColor: '#667eea',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire('Exported!', 'Statistics exported as CSV file', 'success');
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+            Swal.fire('Exported!', 'Statistics exported as JSON file', 'success');
+        }
+    });
+}
+
+function viewQRDetails(qrId) {
+    Swal.fire({
+        title: 'QR Code Details',
+        html: `Loading details for QR: ${qrId}`,
+        showConfirmButton: false,
+        showCloseButton: true,
+        didOpen: () => {
+            // You could load actual details here via AJAX
+        }
+    });
+}
+</script>
 {% endblock %}

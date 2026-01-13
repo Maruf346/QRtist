@@ -2,11 +2,6 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [
-    # Template URLs
-    path('history/', qr_history_view, name='history'),
-    path('stats/', stats_view, name='stats'),
-    path('docs/', api_docs_view, name='api_docs'),
-    
     # QR Download
     path('download/<uuid:qr_id>/', download_qr_view, name='download_qr'),
     
