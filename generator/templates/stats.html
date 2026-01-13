@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block title %}Statistics - QRtist{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4"><i class="fas fa-chart-bar me-2"></i>Statistics</h1>
+    
+    <div class="row">
+        <!-- Total Stats Card -->
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="mb-0">{{ stats.total_qrs }}</h2>
+                            <p class="mb-0">Total QR Codes</p>
+                        </div>
+                        <i class="fas fa-qrcode fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Downloads Card -->
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="mb-0">{{ stats.total_downloads }}</h2>
+                            <p class="mb-0">Total Downloads</p>
+                        </div>
+                        <i class="fas fa-download fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Today's Activity -->
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="mb-0">{{ stats.today_count }}</h2>
+                            <p class="mb-0">Generated Today</p>
+                        </div>
+                        <i class="fas fa-calendar-day fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Most Downloaded -->
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="mb-0">
+                                {% if stats.most_downloaded %}
+                                    {{ stats.most_downloaded.download_count }}
+                                {% else %}
+                                    0
+                                {% endif %}
+                            </h2>
+                            <p class="mb-0">Most Downloads</p>
+                        </div>
+                        <i class="fas fa-star fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- QR Types Distribution -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>QR Code Distribution by Type</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for type, count in stats.by_type.items %}
+                <div class="col-md-3 mb-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h3 class="text-{% if type == 'text' %}primary{% elif type == 'url' %}success{% elif type == 'pdf' %}danger{% else %}warning{% endif %}">
+                                {{ count }}
+                            </h3>
+                            <p class="mb-0">{{ type|title }} QR Codes</p>
+                            {% if stats.total_qrs > 0 %}
+                            <small class="text-muted">
+                                {{ count|floatformat:0|add:0|floatformat:0 }}% of total
+                            </small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Recent Download Activity</h5>
+        </div>
+        <div class="card-body">
+            {% if stats.recent_activity %}
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>QR Code</th>
+                            <th>Type</th>
+                            <th>Downloads</th>
+                            <th>Last Downloaded</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for qr in stats.recent_activity %}
+                        <tr>
+                            <td>
+                                <img src="{{ qr.qr_image.url }}" alt="QR" 
+                                     style="width: 50px; height: 50px;" class="img-thumbnail">
+                            </td>
+                            <td>
+                                <span class="badge bg-{% if qr.content_type == 'text' %}primary{% elif qr.content_type == 'url' %}success{% elif qr.content_type == 'pdf' %}danger{% else %}warning{% endif %}">
+                                    {{ qr.content_type|upper }}
+                                </span>
+                            </td>
+                            <td>
+                                <strong>{{ qr.download_count }}</strong>
+                            </td>
+                            <td>
+                                {{ qr.last_downloaded|timesince }} ago
+                                <br>
+                                <small class="text-muted">{{ qr.last_downloaded|date:"M d, Y H:i" }}</small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-info-circle fa-2x text-muted mb-3"></i>
+                <p>No download activity yet</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

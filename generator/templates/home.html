@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="container text-center">
+        <h1 class="display-4">QR Code Generator</h1>
+        <p class="lead">Generate QR codes from text, URLs, PDFs, and images instantly</p>
+        
+        <!-- Stats Cards -->
+        <div class="row mt-4">
+            <div class="col-6 col-md-3 mb-3">
+                <div class="card bg-primary bg-opacity-10">
+                    <div class="card-body">
+                        <h3 class="card-title">{{ stats.total }}</h3>
+                        <p class="card-text mb-0">Total QR Codes</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 mb-3">
+                <div class="card bg-success bg-opacity-10">
+                    <div class="card-body">
+                        <h3 class="card-title">{{ stats.text }}</h3>
+                        <p class="card-text mb-0">Text QR</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 mb-3">
+                <div class="card bg-info bg-opacity-10">
+                    <div class="card-body">
+                        <h3 class="card-title">{{ stats.url }}</h3>
+                        <p class="card-text mb-0">URL QR</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 mb-3">
+                <div class="card bg-warning bg-opacity-10">
+                    <div class="card-body">
+                        <h3 class="card-title">{{ stats.pdf|add:stats.image }}</h3>
+                        <p class="card-text mb-0">File QR</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <!-- Tabs Navigation -->
+            <ul class="nav nav-tabs" id="qrTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="text-tab" data-bs-toggle="tab" data-bs-target="#text">
+                        <i class="fas fa-font me-1"></i> Text
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="url-tab" data-bs-toggle="tab" data-bs-target="#url">
+                        <i class="fas fa-link me-1"></i> URL
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="pdf-tab" data-bs-toggle="tab" data-bs-target="#pdf">
+                        <i class="fas fa-file-pdf me-1"></i> PDF
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="image-tab" data-bs-toggle="tab" data-bs-target="#image">
+                        <i class="fas fa-image me-1"></i> Image
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content" id="qrTabContent">
+                <!-- Text Tab -->
+                <div class="tab-pane fade show active" id="text" role="tabpanel">
+                    <form id="textForm">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Enter Text</label>
+                            <textarea class="form-control" id="textInput" rows="4" 
+                                      placeholder="Enter any text here..." required></textarea>
+                        </div>
+                        {% include 'qrgen/_customization_options.html' %}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-bolt me-1"></i> Generate QR Code
+                        </button>
+                    </form>
+                </div>
+
+                <!-- URL Tab -->
+                <div class="tab-pane fade" id="url" role="tabpanel">
+                    <form id="urlForm">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Website URL</label>
+                            <input type="url" class="form-control" id="urlInput" 
+                                   placeholder="https://example.com" required>
+                        </div>
+                        {% include 'qrgen/_customization_options.html' %}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-bolt me-1"></i> Generate QR Code
+                        </button>
+                    </form>
+                </div>
+
+                <!-- PDF Tab -->
+                <div class="tab-pane fade" id="pdf" role="tabpanel">
+                    <form id="pdfForm" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Upload PDF File</label>
+                            <input type="file" class="form-control" id="pdfInput" accept=".pdf" required>
+                            <div class="form-text">Maximum file size: 10MB</div>
+                        </div>
+                        {% include 'qrgen/_customization_options.html' %}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-bolt me-1"></i> Generate QR Code
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Image Tab -->
+                <div class="tab-pane fade" id="image" role="tabpanel">
+                    <form id="imageForm" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Upload Image</label>
+                            <input type="file" class="form-control" id="imageInput" 
+                                   accept="image/*" required>
+                            <div class="form-text">Maximum file size: 10MB</div>
+                        </div>
+                        {% include 'qrgen/_customization_options.html' %}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-bolt me-1"></i> Generate QR Code
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- QR Preview Section -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-qrcode me-2"></i>QR Code Preview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="qr-preview" id="qrPreview">
+                        <div class="text-center text-muted">
+                            <i class="fas fa-qrcode fa-4x mb-3"></i>
+                            <p>Your QR code will appear here</p>
+                        </div>
+                    </div>
+                    
+                    <!-- QR Details (hidden initially) -->
+                    <div id="qrDetails" class="mt-3" style="display: none;">
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>QR Details:</h6>
+                                <p class="mb-1"><strong>ID:</strong> <span id="qrId"></span></p>
+                                <p class="mb-1"><strong>Type:</strong> <span id="qrType"></span></p>
+                                <p class="mb-1"><strong>Content:</strong> <span id="qrContent"></span></p>
+                                <p class="mb-0"><strong>Created:</strong> <span id="qrCreated"></span></p>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <button class="btn btn-success" id="downloadBtn">
+                                    <i class="fas fa-download me-1"></i> Download PNG
+                                </button>
+                                <a href="#" class="btn btn-outline-secondary" id="viewDetailsBtn">
+                                    <i class="fas fa-info-circle me-1"></i> View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent QR Codes -->
+            {% if recent_qrs %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recently Generated</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for qr in recent_qrs %}
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center border rounded p-2">
+                                <div class="me-3">
+                                    <img src="{{ qr.qr_image.url }}" alt="QR Code" class="img-thumbnail" style="width: 80px; height: 80px;">
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">{{ qr.get_content_preview }}</h6>
+                                    <p class="text-muted mb-1 small">
+                                        {{ qr.content_type|title }} • {{ qr.created_at|timesince }} ago
+                                    </p>
+                                    <a href="{% url 'download_qr' qr.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-download me-1"></i> Download
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="text-center mt-2">
+                        <a href="{% url 'history' %}" class="btn btn-sm btn-outline-secondary">
+                            View All History
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    let currentQrId = '';
+    let currentQrData = '';
+    
+    // Handle text form submission
+    $('#textForm').submit(function(e) {
+        e.preventDefault();
+        generateQR('/api/qr/text/', {
+            text: $('#textInput').val(),
+            size: $('#qrSize').val(),
+            fill_color: $('#fillColor').val(),
+            back_color: $('#backColor').val()
+        });
+    });
+    
+    // Handle URL form submission
+    $('#urlForm').submit(function(e) {
+        e.preventDefault();
+        generateQR('/api/qr/url/', {
+            url: $('#urlInput').val(),
+            size: $('#qrSize').val(),
+            fill_color: $('#fillColor').val(),
+            back_color: $('#backColor').val()
+        });
+    });
+    
+    // Handle PDF form submission
+    $('#pdfForm').submit(function(e) {
+        e.preventDefault();
+        let formData = new FormData();
+        formData.append('file', $('#pdfInput')[0].files[0]);
+        formData.append('size', $('#qrSize').val());
+        
+        generateQR('/api/qr/pdf/', formData, true);
+    });
+    
+    // Handle image form submission
+    $('#imageForm').submit(function(e) {
+        e.preventDefault();
+        let formData = new FormData();
+        formData.append('file', $('#imageInput')[0].files[0]);
+        formData.append('size', $('#qrSize').val());
+        
+        generateQR('/api/qr/image/', formData, true);
+    });
+    
+    // Generate QR function
+    function generateQR(url, data, isFormData = false) {
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: isFormData ? data : JSON.stringify(data),
+            contentType: isFormData ? false : 'application/json',
+            processData: isFormData ? false : true,
+            headers: isFormData ? {} : {'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()},
+            success: function(response) {
+                if (response.success) {
+                    // Store QR ID and data
+                    currentQrId = response.qr_id;
+                    currentQrData = response.qr_code;
+                    
+                    // Display QR code
+                    $('#qrPreview').html(
+                        `<img src="${response.qr_code}" class="img-fluid" alt="QR Code" id="qrImage">`
+                    );
+                    
+                    // Show QR details
+                    $('#qrId').text(response.qr_id);
+                    $('#qrType').text(response.content_type || 'Unknown');
+                    $('#qrContent').text(response.content);
+                    $('#qrCreated').text(new Date(response.created_at).toLocaleString());
+                    $('#viewDetailsBtn').attr('href', `/api/qr/${response.qr_id}/`);
+                    
+                    $('#qrDetails').show();
+                    $('#downloadBtn').off('click').on('click', function() {
+                        window.location.href = response.download_url;
+                    });
+                    
+                    // Show success message
+                    showAlert('QR code generated successfully!', 'success');
+                    
+                    // Reload recent QR codes after a short delay
+                    setTimeout(() => {
+                        location.reload();
+                    }, 3000);
+                } else {
+                    showAlert('Error: ' + JSON.stringify(response.errors), 'danger');
+                }
+            },
+            error: function(xhr) {
+                showAlert('Error generating QR code. Please try again.', 'danger');
+            }
+        });
+    }
+    
+    // Show alert message
+    function showAlert(message, type) {
+        const alertDiv = $(`
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `);
+        $('.container').prepend(alertDiv);
+        setTimeout(() => alertDiv.alert('close'), 5000);
+    }
+});
+</script>
+{% endblock %}

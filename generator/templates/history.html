@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}QR History - QRtist{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-history me-2"></i>QR Code History</h1>
+        <a href="{% url 'home' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> Generate New
+        </a>
+    </div>
+    
+    {% if qr_codes %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>QR Code</th>
+                    <th>Type</th>
+                    <th>Content</th>
+                    <th>Downloads</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for qr in qr_codes %}
+                <tr>
+                    <td>
+                        <img src="{{ qr.qr_image.url }}" alt="QR Code" 
+                             class="img-thumbnail" style="width: 80px; height: 80px;">
+                    </td>
+                    <td>
+                        <span class="badge bg-{% if qr.content_type == 'text' %}primary{% elif qr.content_type == 'url' %}success{% elif qr.content_type == 'pdf' %}danger{% else %}warning{% endif %}">
+                            {{ qr.content_type|upper }}
+                        </span>
+                    </td>
+                    <td>
+                        <small>{{ qr.get_content_preview }}</small>
+                        {% if qr.file_size %}
+                        <br><span class="text-muted small">{{ qr.file_size }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge bg-secondary">{{ qr.download_count }}</span>
+                        {% if qr.last_downloaded %}
+                        <br><small class="text-muted">{{ qr.last_downloaded|timesince }} ago</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <small>{{ qr.created_at|date:"M d, Y" }}</small>
+                        <br><small class="text-muted">{{ qr.created_at|time:"H:i" }}</small>
+                    </td>
+                    <td>
+                        <a href="{% url 'download_qr' qr.id %}" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-download"></i>
+                        </a>
+                        <button class="btn btn-sm btn-outline-info" 
+                                onclick="copyToClipboard('{{ qr.id }}')"
+                                title="Copy ID">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-qrcode fa-4x text-muted mb-3"></i>
+        <h4>No QR codes generated yet</h4>
+        <p>Generate your first QR code to see it here!</p>
+        <a href="{% url 'home' %}" class="btn btn-primary">Generate QR Code</a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        // Show toast notification
+        const toast = $(`
+            <div class="toast align-items-center text-bg-success border-0" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        QR ID copied to clipboard!
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `);
+        $('body').append(toast);
+        const bsToast = new bootstrap.Toast(toast[0]);
+        bsToast.show();
+        setTimeout(() => toast.remove(), 3000);
+    });
+}
+</script>
+{% endblock %}
