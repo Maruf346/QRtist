@@ -79,10 +79,14 @@
                 <div class="card-body p-4">
                     <!-- QR Code Image -->
                     <div class="text-center mb-3">
-                        <img src="{{ qr.qr_image.url }}" 
+                        {% if qr.qr_image %}
+                        <img src="{{ request.scheme }}://{{ request.get_host }}{{ qr.qr_image.url }}" 
                              alt="QR Code" 
                              class="img-fluid rounded-3 shadow-sm"
                              style="width: 140px; height: 140px; object-fit: cover;">
+                        {% else %}
+                            <div>No image available</div>
+                        {% endif %}
                     </div>
                     
                     <!-- Content Preview -->
