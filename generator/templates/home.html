@@ -547,7 +547,7 @@ $(document).ready(function() {
             
             $('#qrDetails').slideDown();
             $('#downloadBtn').off('click').on('click', function() {
-                window.location.href = `/download/${response.qr_id}/`;
+                window.location.href = `api/qr/download/${response.qr_id}/`;
             });
             
             // Show success notification
