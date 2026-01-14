@@ -12,6 +12,8 @@ from django.utils import timezone
 from .models import QRCode
 from .serializers import *
 from .utils import save_qr_to_model, get_qr_as_base64, generate_download_response
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 
 class BaseQRView(APIView):
@@ -30,7 +32,9 @@ class BaseQRView(APIView):
             'created_at': qr_instance.created_at.isoformat(),
         })
 
+@method_decorator(csrf_exempt, name='dispatch')
 class TextQRView(BaseQRView):
+    serializer_class = TextQRSerializer
     def post(self, request):
         serializer = TextQRSerializer(data=request.data)
         if serializer.is_valid():
@@ -50,7 +54,9 @@ class TextQRView(BaseQRView):
             'errors': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
 
+@method_decorator(csrf_exempt, name='dispatch')
 class URLQRView(BaseQRView):
+    serializer_class = URLQRSerializer
     def post(self, request):
         serializer = URLQRSerializer(data=request.data)
         if serializer.is_valid():
@@ -70,7 +76,9 @@ class URLQRView(BaseQRView):
             'errors': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
 
+@method_decorator(csrf_exempt, name='dispatch')
 class PDFQRView(BaseQRView):
+    serializer_class = PDFQRSerializer
     parser_classes = [MultiPartParser, FormParser]
     
     def post(self, request):
@@ -92,8 +100,10 @@ class PDFQRView(BaseQRView):
             'errors': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
 
+@method_decorator(csrf_exempt, name='dispatch')
 class ImageQRView(BaseQRView):
     parser_classes = [MultiPartParser, FormParser]
+    serializer_class = ImageQRSerializer
     
     def post(self, request):
         serializer = ImageQRSerializer(data=request.data)

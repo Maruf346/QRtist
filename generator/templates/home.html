@@ -411,144 +411,234 @@ $(document).ready(function() {
     function hideLoading(button, originalText) {
         button.html(originalText).prop('disabled', false);
     }
+
+    
+    const CSRF_TOKEN = $('[name=csrfmiddlewaretoken]').val();
+
     
     // Handle text form submission
     $('#textForm').submit(function(e) {
         e.preventDefault();
-        const button = $(this).find('button[type="submit"]');
-        const originalText = showLoading(button);
-        
-        generateQR('/api/qr/text/', {
+        const formData = {
             text: $('#textInput').val(),
-            size: $('#qrSize').val(),
+            size: parseInt($('#qrSize').val()),
             fill_color: $('#fillColor').val(),
             back_color: $('#backColor').val()
-        }, () => hideLoading(button, originalText));
+        };
+        
+        generateQR('/api/qr/text/', formData);
     });
-    
+
     // Handle URL form submission
     $('#urlForm').submit(function(e) {
         e.preventDefault();
-        const button = $(this).find('button[type="submit"]');
-        const originalText = showLoading(button);
-        
-        generateQR('/api/qr/url/', {
+        const formData = {
             url: $('#urlInput').val(),
-            size: $('#qrSize').val(),
+            size: parseInt($('#qrSize').val()),
             fill_color: $('#fillColor').val(),
             back_color: $('#backColor').val()
-        }, () => hideLoading(button, originalText));
+        };
+        
+        generateQR('/api/qr/url/', formData);
     });
-    
+
     // Handle PDF form submission
     $('#pdfForm').submit(function(e) {
         e.preventDefault();
-        const button = $(this).find('button[type="submit"]');
-        const originalText = showLoading(button);
+        const fileInput = $('#pdfInput')[0];
         
-        let formData = new FormData();
-        formData.append('file', $('#pdfInput')[0].files[0]);
+        if (!fileInput.files.length) {
+            showAlert('Please select a PDF file', 'warning');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
         formData.append('size', $('#qrSize').val());
         
-        generateQR('/api/qr/pdf/', formData, true, () => hideLoading(button, originalText));
+        generateFileQR('/api/qr/pdf/', formData);
     });
-    
+
     // Handle image form submission
     $('#imageForm').submit(function(e) {
         e.preventDefault();
-        const button = $(this).find('button[type="submit"]');
-        const originalText = showLoading(button);
+        const fileInput = $('#imageInput')[0];
         
-        let formData = new FormData();
-        formData.append('file', $('#imageInput')[0].files[0]);
+        if (!fileInput.files.length) {
+            showAlert('Please select an image file', 'warning');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
         formData.append('size', $('#qrSize').val());
         
-        generateQR('/api/qr/image/', formData, true, () => hideLoading(button, originalText));
+        generateFileQR('/api/qr/image/', formData);
     });
-    
-    // Generate QR function
-    function generateQR(url, data, isFormData = false, callback = null) {
+
+    // Updated generateQR function for text/URL
+    function generateQR(url, data) {
         $.ajax({
             url: url,
             type: 'POST',
-            data: isFormData ? data : JSON.stringify(data),
-            contentType: isFormData ? false : 'application/json',
-            processData: isFormData ? false : true,
-            headers: isFormData ? {} : {
-                'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            headers: {
+                'X-CSRFToken': CSRF_TOKEN,
                 'X-Requested-With': 'XMLHttpRequest'
             },
             success: function(response) {
-                if (response.success) {
-                    // Store QR ID and data
-                    currentQrId = response.qr_id;
-                    currentQrData = response.qr_code;
-                    
-                    // Display QR code with animation
-                    $('#qrPreview').html(`
-                        <div class="qr-result">
-                            <img src="${response.qr_code}" class="img-fluid rounded-3 shadow" 
-                                 alt="Generated QR Code" style="max-width: 300px;">
-                            <div class="mt-4">
-                                <div class="alert alert-success" role="alert">
-                                    <i class="fas fa-check-circle me-2"></i>
-                                    QR code generated successfully!
-                                </div>
-                            </div>
-                        </div>
-                    `);
-                    
-                    // Show QR details
-                    $('#qrId').text(response.qr_id);
-                    $('#qrType').text(response.content_type || 'Unknown').removeClass().addClass('badge bg-primary');
-                    $('#qrContent').text(response.content);
-                    $('#qrCreated').text(new Date(response.created_at).toLocaleString());
-                    $('#viewDetailsBtn').attr('href', `/api/qr/${response.qr_id}/`);
-                    
-                    $('#qrDetails').slideDown();
-                    $('#downloadBtn').off('click').on('click', function() {
-                        window.location.href = response.download_url;
-                    });
-                    
-                    // Show success notification
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'QR Code Generated!',
-                        text: 'Your QR code is ready to download',
-                        timer: 3000,
-                        showConfirmButton: false,
-                        position: 'top-end',
-                        toast: true
-                    });
-                    
-                    // Scroll to preview
-                    $('html, body').animate({
-                        scrollTop: $('#qrPreview').offset().top - 100
-                    }, 1000);
-                    
-                    // Reload recent QR codes after delay
-                    setTimeout(() => {
-                        location.reload();
-                    }, 5000);
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: JSON.stringify(response.errors),
-                        confirmButtonColor: '#667eea'
-                    });
-                }
-                if (callback) callback();
+                handleSuccessResponse(response);
             },
             error: function(xhr) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Something went wrong. Please try again.',
-                    confirmButtonColor: '#667eea'
-                });
-                if (callback) callback();
+                handleErrorResponse(xhr);
             }
+        });
+    }
+
+    // New function for file uploads (PDF/Image)
+    function generateFileQR(url, formData) {
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                'X-CSRFToken': CSRF_TOKEN,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            success: function(response) {
+                handleSuccessResponse(response);
+            },
+            error: function(xhr) {
+                handleErrorResponse(xhr);
+            }
+        });
+    }
+
+    // Common success handler
+    function handleSuccessResponse(response) {
+        if (response.success) {
+            // Store QR ID and data
+            currentQrId = response.qr_id;
+            currentQrData = response.qr_code;
+            
+            // Display QR code
+            $('#qrPreview').html(`
+                <div class="qr-result">
+                    <img src="${response.qr_code}" class="img-fluid rounded-3 shadow" 
+                        alt="Generated QR Code" style="max-width: 300px;">
+                    <div class="mt-4">
+                        <div class="alert alert-success" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            QR code generated successfully!
+                        </div>
+                    </div>
+                </div>
+            `);
+            
+            // Show QR details
+            $('#qrId').text(response.qr_id);
+            $('#qrType').text(response.content_type || 'Unknown');
+            $('#qrContent').text(response.content);
+            $('#qrCreated').text(new Date(response.created_at).toLocaleString());
+            $('#viewDetailsBtn').attr('href', `/api/qr/${response.qr_id}/`);
+            
+            $('#qrDetails').slideDown();
+            $('#downloadBtn').off('click').on('click', function() {
+                window.location.href = response.download_url;
+            });
+            
+            // Show success notification
+            Swal.fire({
+                icon: 'success',
+                title: 'QR Code Generated!',
+                text: 'Your QR code is ready to download',
+                timer: 3000,
+                showConfirmButton: false,
+                position: 'top-end',
+                toast: true
+            });
+            
+            // After successful QR generation, update recent QR codes without page reload
+            function updateRecentQRCodes() {
+                $.ajax({
+                    url: '/api/qr/',  // Your API endpoint that returns recent QR codes
+                    type: 'GET',
+                    success: function(response) {
+                        // Update the recent QR codes section
+                        if (response.length > 0) {
+                            let html = '';
+                            response.slice(0, 5).forEach(qr => {
+                                html += `
+                                <div class="col-md-4 mb-3">
+                                    <div class="d-flex align-items-center border rounded p-2">
+                                        <div class="me-3">
+                                            <img src="${qr.qr_image_url}" alt="QR Code" 
+                                                class="img-thumbnail" style="width: 80px; height: 80px;">
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1">${qr.content_preview}</h6>
+                                            <p class="text-muted mb-1 small">
+                                                ${qr.content_type} • ${new Date(qr.created_at).toLocaleTimeString()}
+                                            </p>
+                                            <button class="btn btn-sm btn-outline-primary download-recent-btn" 
+                                                    data-id="${qr.id}">
+                                                <i class="fas fa-download me-1"></i> Download
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>`;
+                            });
+                            
+                            $('#recentQRCodesContainer').html(`
+                                <div class="row">
+                                    ${html}
+                                </div>
+                            `);
+                            
+                            // Add click handler for download buttons
+                            $('.download-recent-btn').click(function() {
+                                const qrId = $(this).data('id');
+                                window.location.href = `/download/${qrId}/`;
+                            });
+                        }
+                    },
+                    error: function() {
+                        console.log('Failed to update recent QR codes');
+                    }
+                });
+            }
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: JSON.stringify(response.errors),
+                confirmButtonColor: '#667eea'
+            });
+        }
+    }
+
+    // Common error handler
+    function handleErrorResponse(xhr) {
+        let errorMessage = 'Something went wrong. Please try again.';
+        
+        if (xhr.responseJSON && xhr.responseJSON.error) {
+            errorMessage = xhr.responseJSON.error;
+        } else if (xhr.status === 403) {
+            errorMessage = 'CSRF verification failed. Please refresh the page.';
+        } else if (xhr.status === 415) {
+            errorMessage = 'Unsupported media type. Please check your request format.';
+        } else if (xhr.status === 400) {
+            errorMessage = 'Bad request. Please check your input.';
+        }
+        
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: errorMessage,
+            confirmButtonColor: '#667eea'
         });
     }
     

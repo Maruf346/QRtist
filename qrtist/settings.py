@@ -111,6 +111,16 @@ USE_I18N = True
 USE_TZ = True
 
 
+CSRF_COOKIE_HTTPONLY = False  # Allows JavaScript to read CSRF token
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+
+CSRF_USE_SESSIONS = False
+CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
@@ -135,6 +145,10 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.FormParser',
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ],
 }
 
 
