@@ -1,0 +1,1 @@
+web: gunicorn qrtist.wsgi --log-file - --workers 2 --threads 4 --timeout 120

@@ -1,5 +1,10 @@
 import os
 from pathlib import Path
+import dj_database_url
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -9,12 +14,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-w6m$@irrvzwxl7+(^m7v3x39jz@^5q6@t8121z5cegm_hevjt0'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-fallback-key-for-dev-only')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
 
 # Application definition
@@ -31,7 +36,8 @@ INSTALLED_APPS = [
     # Third-party apps
     'rest_framework',
     'drf_spectacular',
-    'drf_spectacular_sidecar',  # optional, for Swagger UI assets
+    'drf_spectacular_sidecar',
+    'whitenoise.runserver_nostatic',  # Add this
     
     # Local apps
     'api',
@@ -41,6 +47,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add this after security middleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -73,10 +80,10 @@ WSGI_APPLICATION = 'qrtist.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default='sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite3'),
+        conn_max_age=600
+    )
 }
 
 
@@ -111,29 +118,40 @@ USE_I18N = True
 USE_TZ = True
 
 
-CSRF_COOKIE_HTTPONLY = False  # Allows JavaScript to read CSRF token
-CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:8000',
-    'http://127.0.0.1:8000',
-]
+# Security settings for production
+if not DEBUG:
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
+CSRF_COOKIE_HTTPONLY = False
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000').split(',')
 CSRF_USE_SESSIONS = False
-CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Railway will collect static files here
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
+# Whitenoise configuration
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Media files - For Railway, use cloud storage or Railway's volume
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Create these directories
-os.makedirs(BASE_DIR / 'static', exist_ok=True)
-os.makedirs(BASE_DIR / 'media/qr_codes', exist_ok=True)
-os.makedirs(BASE_DIR / 'media/uploads', exist_ok=True)
+# Create these directories if they don't exist
+os.makedirs(STATIC_ROOT, exist_ok=True)
+os.makedirs(MEDIA_ROOT, exist_ok=True)
+os.makedirs(MEDIA_ROOT / 'qr_codes', exist_ok=True)
+os.makedirs(MEDIA_ROOT / 'uploads', exist_ok=True)
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -151,59 +169,58 @@ REST_FRAMEWORK = {
     ],
 }
 
-
-
 # Spectacular settings
-SPECTACULAR_SETTINGS =  {
+SPECTACULAR_SETTINGS = {
     'TITLE': 'QRtist API',
     'DESCRIPTION': 'API documentation for QRtist application',
     'VERSION': '1.0.0',
     'TERMS_OF_SERVICE': 'https://www.google.com/policies/terms/',
     'CONTACT': {'email': 'maruf.bshs@gmail.com'},
     'LICENSE': {'name': 'BSD License'},
-    'SERVE_INCLUDE_SCHEMA': False,  # optional: hides raw schema in UI
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
 }
 
-
-
 # Jazzmin settings
-
 JAZZMIN_SETTINGS = {
     "site_title": "QRtist Admin",
     "site_header": "QRtist",
     "site_brand": "QRtist",
-    "site_logo": "images/logo.png",  # optional, we can skip for now
     "welcome_sign": "Welcome to the QRtist Admin Panel",
     "copyright": "QRtist © 2026",
-
-    # top-right user menu
     "user_avatar": None,
-
-    # Icons
     "icons": {
         "auth": "fas fa-users-cog",
         "auth.user": "fas fa-user",
         "auth.Group": "fas fa-users",
-
-        # Your models
-        "paper.Paper": "fas fa-book",
-        "paper.UserUpload": "fas fa-upload",
     },
-
-    # Side menu ordering
     "default_icon_parents": "fas fa-chevron-right",
     "default_icon_children": "fas fa-circle",
 }
 
 JAZZMIN_UI_TWEAKS = {
-    "theme": "lux",   # clean light Bootstrap theme
-    "dark_mode_theme": "darkly",  
+    "theme": "lux",
+    "dark_mode_theme": "darkly",
     "navbar_small_text": False,
     "footer_small_text": False,
     "body_small_text": False,
-
     "brand_color": "primary",
     "accent": "primary",
     "navbar": "navbar-dark bg-primary",
     "no_navbar_border": False,
+}
+
+# Logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
 }
